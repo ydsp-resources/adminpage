@@ -42,6 +42,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}
 .pc{background:rgba(255,255,255,.65);border-radius:3px;padding:10px 12px;border-top:6px solid var(--c)}.pc ul{margin:8px 0 0 0;padding-left:0;list-style:none}.pc li{padding:6px 0;border-top:1px dashed rgba(18,87,224,.35);font-size:16px}.pc li b{font:14px Silkscreen,monospace;color:var(--blue);display:block}
 .foot{color:#B9C7E4;font-size:15px;margin-top:20px}
 #printarea{display:none}
+
+#sbar{display:none}
+#printarea h1{font:700 22px Outfit,sans-serif;margin:0 0 6px}#printarea h2{font:700 18px Outfit,sans-serif;margin:18px 0 6px}
+#printarea table{width:100%;border-collapse:collapse;margin:6px 0 22px}#printarea td,#printarea th{border:1px solid #999;padding:6px 8px;vertical-align:top;text-align:left;font-size:15px}#printarea th{background:#eef2fa}#printarea .pp{font-size:14px;padding:2px 9px;margin:2px 4px 2px 0}
+body.sheet .app,body.sheet .top{display:none!important}
+body.sheet #sbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;position:sticky;top:0;z-index:30;background:#050B1A;padding:10px 16px;border-bottom:1px solid rgba(47,123,255,.45);font-size:16px;color:#C9D6F0}
+body.sheet #printarea{display:block;background:#fff;color:#000;max-width:980px;margin:16px auto 40px;padding:20px 26px;border-radius:3px}
+#toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;background:#0B1E45;color:#fff;border:1px solid #FF8A1F;padding:12px 16px;border-radius:4px;max-width:92%;font-size:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}#toast[hidden]{display:none}#toast a{color:#FFB366;text-decoration:underline}
+@media print{#sbar,#toast{display:none!important}body.sheet #printarea{max-width:none;margin:0;padding:0;border-radius:0}}
 @media print{
  body{background:#fff!important;color:#000;font-size:11pt}.app,.top{display:none!important}#printarea{display:block}
  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -53,8 +62,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}
 @media(max-width:600px){.box,.act{padding:12px}.top{position:static}}
 </style></head><body>
 <div class="top app"><h1>Programme control<small>Admin &middot; YDSP S&amp;T camp 30 Nov - 4 Dec 2026</small></h1><nav>
-<button class="btn pri" data-a="print">Print / save PDF</button><button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="export">Save backup</button><button class="btn" data-a="import">Load backup</button><button class="btn dng" data-a="reset">Clear all</button></nav><input type="file" id="file" accept="application/json,.json" hidden></div>
-<div class="wrap app" id="app"></div><div id="printarea"></div>
+<button class="btn pri" data-a="print">Print / save PDF</button><button class="btn" data-a="sheet">View printable sheet</button><button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="export">Save backup</button><button class="btn" data-a="import">Load backup</button><button class="btn dng" data-a="reset">Clear all</button></nav><input type="file" id="file" accept="application/json,.json" hidden></div>
+<div class="wrap app" id="app"></div><div id="sbar"><button class="btn" data-a="back">&#9666; Back to editing</button><button class="btn pri" data-a="print">Print / save as PDF</button><span>In the print window, choose &ldquo;Save as PDF&rdquo; as the destination, then press Save. You can also press Ctrl+P (Cmd+P on a Mac).</span></div><div id="printarea"></div><div id="toast" hidden></div>
 <script>
 (function(){
 var D=[['Mon','Monday','30 Nov 2026',[['9.00','10.00','Welcome to camp (DSTA)','act'],['10.00','10.20','Ice breakers','act'],['10.20','11.10','Space environment and applications (Lecture)','lec'],['11.10','12.00','Guest Speaker: Autonomy in Denied and Contested Environments','act'],['12.00','1.15','Lunch','brk'],['1.15','3.30','Rotating visits (DSTA)','act'],['3.30','4.15','Space mission design and Intro. to systems engineering (Lecture)','lec'],['4.15','5.00','Intro. to orbital mechanics (Lecture)','lec']]],
@@ -128,9 +137,11 @@ function render(top){var d=D[cur],day=d[0],h='',dp=dup();
 function pr(){var h='<h1>YDSP Science &amp; Technology Camp: programme and duties</h1>';D.forEach(function(d){var day=d[0];h+='<div class="day"><h2>'+d[1]+' '+d[2]+'</h2><p><b>Present:</b> '+((S.present[day]||[]).map(function(i){return pill(i)}).join('')||'not recorded')+'</p><table><tr><th style="width:17%">Time</th><th style="width:33%">Activity or duty</th><th>People and their duties</th></tr>';
  L(d).forEach(function(it){var a=S.act[it.key]||{people:[]};h+='<tr><td>'+esc(it.tm)+'</td><td>'+esc(it.t)+'</td><td>'+(a.people.map(function(x){return'<div>'+pill(x.p)+(x.t?' '+esc(x.t):'')+'</div>'}).join('')||'-')+'</td></tr>'});h+='</table></div>'});
  document.getElementById('printarea').innerHTML=h}
-function dl(name,text){var u=URL.createObjectURL(new Blob([text],{type:'application/octet-stream'})),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(u)},5000)}
+function toast(m){var t=document.getElementById('toast');t.innerHTML='<span>'+m+'</span><button class="btn" data-a="tclose">OK</button>';t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},30000)}
+function fail(err){alert('Sorry, that did not work ('+(err&&err.message?err.message:err)+'). Please take a screenshot of this message and send it to the person who set up this page.')}
+function dl(name,text){var u=URL.createObjectURL(new Blob([text],{type:'application/octet-stream'})),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();var u2=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));toast('<b>'+esc(name)+'</b> should now be in your Downloads folder. If nothing was saved, <a href="'+u2+'" target="_blank" rel="noopener">open it in a new tab</a> and save it from there (Ctrl+S).');setTimeout(function(){a.remove();URL.revokeObjectURL(u)},5000);setTimeout(function(){URL.revokeObjectURL(u2)},180000)}
 function csv(){var rows=[['Day','Date','Time','Activity or duty','Person','Duty']];function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return'"'+v.replace(/"/g,'""')+'"'}
- D.forEach(function(d){L(d).forEach(function(it){var a=S.act[it.key]||{people:[]};a.people.forEach(function(x){rows.push([d[1],d[2],it.tm,it.t,P(x.p).name,x.t])})})});
+ D.forEach(function(d){L(d).forEach(function(it){var a=S.act[it.key]||{people:[]};a.people.forEach(function(x){rows.push([d[1],d[2],it.tm,it.t,(P(x.p)||{name:''}).name,x.t])})})});
  dl('YDSP_camp_duties.csv','\ufeff'+rows.map(function(r){return r.map(c).join(',')}).join('\r\n'))}
 var tmr=null;function later(){clearTimeout(tmr);tmr=setTimeout(save,250)}
 function uid(){return'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
@@ -149,9 +160,12 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-a]')
  else if(a==='addc'){var id=tok(uid().slice(-7));(S.custom[day]||(S.custom[day]=[])).push({id:id,title:'',start:'',end:''});save();render();var t=document.querySelector('[data-ct="'+id+'"]');if(t){t.focus();t.scrollIntoView({block:'center'})}}
  else if(a.indexOf('delc:')===0){var cid=a.split(':')[1],c=CU(cid);if(c&&confirm('Delete the duty "'+(c.title||'Extra duty')+'" and its assignments?')){S.custom[day]=S.custom[day].filter(function(x){return x.id!==cid});delete S.act[day+'-c-'+cid];save();render()}}
  else if(a.indexOf('rp:')===0){var q=a.split(':');A(q[1]).people.splice(+q[2],1);save();render()}
- else if(a==='print'){pr();window.print()}
- else if(a==='csv')csv();
- else if(a==='export')dl('YDSP_duties_backup.json',JSON.stringify({version:2,exportedAt:new Date().toISOString(),people:S.people,present:S.present,act:S.act,custom:S.custom,bt:S.bt},null,1));
+ else if(a==='print'){try{pr();window.print()}catch(err){fail(err)}}
+ else if(a==='sheet'){try{pr();document.body.classList.add('sheet');window.scrollTo(0,0)}catch(err){fail(err)}}
+ else if(a==='back'){document.body.classList.remove('sheet');window.scrollTo(0,0)}
+ else if(a==='tclose'){document.getElementById('toast').hidden=true}
+ else if(a==='csv'){try{csv()}catch(err){fail(err)}}
+ else if(a==='export'){try{dl('YDSP_duties_backup.json',JSON.stringify({version:2,exportedAt:new Date().toISOString(),people:S.people,present:S.present,act:S.act,custom:S.custom,bt:S.bt},null,1))}catch(err){fail(err)}}
  else if(a==='import')document.getElementById('file').click();
  else if(a==='reset'){if(confirm('Clear all people, attendance and duties on this device? Save a backup first if you may need them.')){S=DEF();save();render()}}});
 document.addEventListener('change',function(e){var t=e.target;
@@ -168,6 +182,6 @@ document.addEventListener('input',function(e){var t=e.target;
 document.addEventListener('focusout',function(e){var d=e.target.dataset;if(!d)return;if(d.name||d.bt)render();else if(d.cs||d.ce){var id=d.cs||d.ce;setTimeout(function(){var ae=document.activeElement;if(ae&&ae.dataset&&(ae.dataset.cs===id||ae.dataset.ce===id))return;render();var el=document.querySelector('[data-ct="'+id+'"]');if(el){var r=el.getBoundingClientRect();if(r.top<90||r.bottom>innerHeight-40)el.scrollIntoView({block:'center'})}},0)}});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.id==='newp'){e.preventDefault();addp()}});
 load();var t=new Date(),ds=['2026-11-30','2026-12-01','2026-12-02','2026-12-03','2026-12-04'],today=t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2),ix=ds.indexOf(today);if(ix>-1)cur=ix;
-render();window.addEventListener('beforeprint',pr);
+render();window.addEventListener('beforeprint',function(){try{pr()}catch(e){}});
 })();
 </script></body></html>
